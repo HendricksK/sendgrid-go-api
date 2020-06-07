@@ -26,9 +26,9 @@ func setupRoutes() {
 
 func sendEmail() string {
 
-	from := mail.NewEmail("Kurvin Development", "")
+	from := mail.NewEmail("Kurvin Development", testemailuserfrom)
 	subject := "Sending with SendGrid is Fun"
-	to := mail.NewEmail("Kurvin", "")
+	to := mail.NewEmail("Kurvin", testemailuserto)
 	plainTextContent := "and easy to do anywhere, even with Go"
 	htmlContent := "<strong>and easy to do anywhere, even with Go</strong>"
 	message := mail.NewSingleEmail(from, subject, to, plainTextContent, htmlContent)
@@ -37,7 +37,6 @@ func sendEmail() string {
 	response, err := client.Send(message)
 	if err != nil {
 		log.Println(err)
-
 	} else {
 		fmt.Println(response.StatusCode)
 		fmt.Println(response.Body)
