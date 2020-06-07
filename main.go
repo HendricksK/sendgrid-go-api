@@ -26,9 +26,9 @@ func setupRoutes() {
 
 func sendEmail() string {
 
-	from := mail.NewEmail("Kurvin Development", "kurvindev@gmail.com")
+	from := mail.NewEmail("Kurvin Development", "")
 	subject := "Sending with SendGrid is Fun"
-	to := mail.NewEmail("Kurvin", "kurvinhendricks@gmail.com")
+	to := mail.NewEmail("Kurvin", "")
 	plainTextContent := "and easy to do anywhere, even with Go"
 	htmlContent := "<strong>and easy to do anywhere, even with Go</strong>"
 	message := mail.NewSingleEmail(from, subject, to, plainTextContent, htmlContent)
@@ -49,6 +49,8 @@ func sendEmail() string {
 }
 
 var sendgridapikey string 
+var testemailuserfrom string
+var testemailuserto string
 
 func main() {
 	err := godotenv.Load()
@@ -58,6 +60,8 @@ func main() {
 	}
 
 	sendgridapikey = os.Getenv("SEND_GRID_API")
+	testemailuserfrom = os.Getenv("TEST_FROM_USER")
+	testemailuserto = os.Getenv("TEST_TO_USER")
 
 	fmt.Println("main")
 	setupRoutes()
