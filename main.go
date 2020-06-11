@@ -5,10 +5,9 @@ package main
 import (
 	"fmt"
 	"log"
-	"os"
 	"net/http"
-	"encoding/json"
-	"io"
+	"os"
+	"strings"
 
 	"github.com/sendgrid/sendgrid-go"
 	"github.com/sendgrid/sendgrid-go/helpers/mail"
@@ -20,32 +19,43 @@ func setupRoutes() {
     http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request){
 
 		queryParams := r.URL.Query()
-		song := queryParams["song"]
+		song := strings.Join(queryParams["song"], "")
 
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		fmt.Fprint(w, song)
 
-		response := sendEmail("tired of being alone")
+		response := sendEmailTest(song)
 		fmt.Fprint(w, response)
 
 	})
 	
 	http.HandleFunc("/send-mail", func(w http.ResponseWriter, r *http.Request) {
-		decoder := json.NewDecoder(r.Body)
+
+		subject := r.PostFormValue("subject")
+		fromEmail := r.PostFormValue("fromemail")
+		toEmail := r.PostFormValue("toemail")
+		emailText := r.PostFormValue("emailtext")
 		
-		fmt.Fprint(decoder)
+		fmt.Println(subject)
+		fmt.Println(fromEmail)
+		fmt.Println(toEmail)
+		fmt.Println(emailText)
+
+		response := sendEmail(subject, fromEmail, toEmail, emailText)
+		fmt.Fprint(w, response)
+
 	})
 }
 
-func sendEmail(song string) string {
+func sendEmailTest(emailText string) string {
 
-	from := mail.NewEmail("Kurvin Development", testemailuserfrom)
+	from := mail.NewEmail("Kurvin Development", testEmailUserFrom)
 	subject := "Sending with SendGrid is Fun"
-	to := mail.NewEmail("Kurvin", testemailuserto)
-	plainTextContent := song
-	htmlContent := "<div>" + song + "</div>"
+	to := mail.NewEmail("Kurvin", testEmailUserTo)
+	plainTextContent := emailText
+	htmlContent := "<div>" + emailText + "</div>"
 	message := mail.NewSingleEmail(from, subject, to, plainTextContent, htmlContent)
-	client := sendgrid.NewSendClient(sendgridapikey)
+	client := sendgrid.NewSendClient(sendGridApiKey)
 	response, err := client.Send(message)
 	if err != nil {
 		log.Println(err)
@@ -59,9 +69,30 @@ func sendEmail(song string) string {
 	
 }
 
-var sendgridapikey string 
-var testemailuserfrom string
-var testemailuserto string
+func sendEmail(subjectEmail string, fromEmail string, toEmail string, emailText string) string {
+
+	from := mail.NewEmail("Kurvin Development", fromEmail)
+	subject := subjectEmail
+	to := mail.NewEmail("Kurvin", toEmail)
+	htmlContent := "<div>" + emailText + "</div>"
+	message := mail.NewSingleEmail(from, subject, to, htmlContent, htmlContent)
+	client := sendgrid.NewSendClient(sendGridApiKey)
+	response, err := client.Send(message)
+	if err != nil {
+		log.Println(err)
+	} else {
+		fmt.Println(response.StatusCode)
+		fmt.Println(response.Body)
+		fmt.Println(response.Headers)
+	}
+
+	return response.Body
+	
+}
+
+var sendGridApiKey string 
+var testEmailUserFrom string
+var testEmailUserTo string
 
 func main() {
 	err := godotenv.Load()
@@ -70,9 +101,9 @@ func main() {
 		fmt.Println("Error loading .env file, cannot get much done")
 	}
 
-	sendgridapikey = os.Getenv("SEND_GRID_API")
-	testemailuserfrom = os.Getenv("TEST_FROM_USER")
-	testemailuserto = os.Getenv("TEST_TO_USER")
+	sendGridApiKey = os.Getenv("SEND_GRID_API")
+	testEmailUserFrom = os.Getenv("TEST_FROM_USER")
+	testEmailUserTo = os.Getenv("TEST_TO_USER")
 
 	fmt.Println("main")
 	setupRoutes()
