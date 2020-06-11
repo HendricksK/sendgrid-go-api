@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"net/http"
+	"encoding/json"
 	"io"
 
 	"github.com/sendgrid/sendgrid-go"
@@ -17,22 +18,33 @@ import (
 func setupRoutes() {
 	fmt.Println("set up routes called")
     http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request){
-		fmt.Println("/ called")
-		response := sendEmail()
-		io.WriteString(w, response)
-		fmt.Println(response)
-    })
+
+		queryParams := r.URL.Query()
+		song := queryParams["song"]
+
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		fmt.Fprint(w, song)
+
+		response := sendEmail("tired of being alone")
+		fmt.Fprint(w, response)
+
+	})
+	
+	http.HandleFunc("/send-mail", func(w http.ResponseWriter, r *http.Request) {
+		decoder := json.NewDecoder(r.Body)
+		
+		fmt.Fprint(decoder)
+	})
 }
 
-func sendEmail() string {
+func sendEmail(song string) string {
 
 	from := mail.NewEmail("Kurvin Development", testemailuserfrom)
 	subject := "Sending with SendGrid is Fun"
 	to := mail.NewEmail("Kurvin", testemailuserto)
-	plainTextContent := "and easy to do anywhere, even with Go"
-	htmlContent := "<strong>and easy to do anywhere, even with Go</strong>"
+	plainTextContent := song
+	htmlContent := "<div>" + song + "</div>"
 	message := mail.NewSingleEmail(from, subject, to, plainTextContent, htmlContent)
-	// client := sendgrid.NewSendClient(os.Getenv("SENDGRID_API_KEY"))
 	client := sendgrid.NewSendClient(sendgridapikey)
 	response, err := client.Send(message)
 	if err != nil {
